@@ -1,0 +1,24 @@
+{
+  "name": "web3-solidity-mastery-30days",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.1",
+    "dotenv": "^17.2.3",
+    "hardhat": "^2.27.2",
+    "typescript": "^5.9.3"
+  }
+}
