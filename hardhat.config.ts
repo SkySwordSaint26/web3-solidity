@@ -2,6 +2,8 @@ import "dotenv/config"
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-gas-reporter";
+import "@openzeppelin/hardhat-upgrades";
+
 
 const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL
 if (!MAINNET_RPC_URL) {
