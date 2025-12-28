@@ -55,7 +55,7 @@ contract RebaseERC20 is Initializable, ERC20Upgradeable, OwnableUpgradeable, Pau
   }
 
   function withdraw(uint256 shares) external whenNotPaused returns (uint256 assets) {
-    require(shares > 0, "Zero shares");
+    require(shares > 0, "Zero shares provided for withdrawal.");
     require(_shareBalance[msg.sender] >= shares, "Insufficient shares");
  
     uint256 totalAssets = address(this).balance;

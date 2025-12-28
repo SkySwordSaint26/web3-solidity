@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
 import { RebaseERC20 } from "../../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+import { readValidations } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 describe("ERC20 Rebse", function () {
   let rebaseToken: RebaseERC20;
@@ -182,10 +183,70 @@ describe("ERC20 Rebse", function () {
       expect(bobSharesAfter).to.be.greaterThan(bobSharesBefore);
     });
 
+    it('should revert on insufficient balance', async () => {
+      await expect(
+        rebaseToken.connect(bob).transfer(charlie.address, ethers.parseEther("1.0"))
+      ).to.be.revertedWith("insufficient balance");
+    });
+
+    it("should revert on transfer to zero address", async () => {
+      await expect(
+        rebaseToken.connect(alice).transfer(ethers.ZeroAddress, ethers.parseEther("1.0"))
+      ).to.be.reverted;
+    });
+
     it("should emit Transfer event", async () => {
       await expect(
         rebaseToken.connect(alice).transfer(bob.address, ethers.parseEther("1.0"))
       ).to.emit(rebaseToken, "Transfer").withArgs(alice.address, bob.address, ethers.parseEther("1.0"));
+    });
+  });
+
+  describe("Withdraw", function(){
+    this.beforeEach(async () => {
+      await rebaseToken.connect(alice).mint(alice.address, 0 , {value : ethers.parseEther("2.0")});
+    });
+
+    it("should revert on withdraw with insufficient shares", async()=>{
+      await expect(
+        rebaseToken.connect(alice).withdraw(ethers.parseEther("3.0"))
+      ).to.be.revertedWith("Insufficient shares");
+    });
+
+    it("Should revert on zero shares withdrawl", async ()=>{
+      await expect(
+        rebaseToken.connect(alice).withdraw(0)
+      ).to.be.revertedWith("Zero shares provided for withdrawal.");
+    });
+
+    it("Should withdraw ETH correctly", async () => {
+      const aliceInitialBalance = await ethers.provider.getBalance(alice.address);
+
+      await rebaseToken.connect(alice).withdraw(ethers.parseEther("1.0"));
+
+      const aliceFinalBalance = await ethers.provider.getBalance(alice.address);
+      expect(aliceFinalBalance).to.be.greaterThan(aliceInitialBalance);
+      expect(await rebaseToken.balanceOf(alice.address)).to.be.equal(ethers.parseEther("1.0"));
+    });
+
+    it("Should adjust shares on withdraw", async () =>{
+      const aliceSharesBefore = await rebaseToken.sharesOf(alice.address);
+
+      await rebaseToken.connect(alice).withdraw(ethers.parseEther("1.0"));
+
+      const aliceSharesAfter = await rebaseToken.sharesOf(alice.address);
+
+      expect(aliceSharesAfter).to.be.lessThan(aliceSharesBefore);
+    });
+
+    it("Should emit Withdraw and transfer events", async () => {
+      await expect(
+        rebaseToken.connect(alice).withdraw(ethers.parseEther("1.0"))
+      ).to.emit(rebaseToken, "Withdraw").withArgs(alice.address, ethers.parseEther("1.0"), ethers.parseEther("1.0"));
+
+      await expect(
+        rebaseToken.connect(alice).withdraw(ethers.parseEther("1.0"))
+      ).to.emit(rebaseToken, "Transfer").withArgs(alice.address, ethers.ZeroAddress, ethers.parseEther("1.0"));
     });
   });
 });
