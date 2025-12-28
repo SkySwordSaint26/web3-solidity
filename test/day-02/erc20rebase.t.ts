@@ -249,4 +249,68 @@ describe("ERC20 Rebse", function () {
       ).to.emit(rebaseToken, "Transfer").withArgs(alice.address, ethers.ZeroAddress, ethers.parseEther("1.0"));
     });
   });
+
+  describe("Pause/Unpause Functionality", function () {
+    it("Should allow owner to pause", async function () {
+      await rebaseToken.connect(owner).pause();
+      expect(await rebaseToken.paused()).to.equal(true);
+    });
+
+    it("Should allow owner to unpause", async function () {
+      await rebaseToken.connect(owner).pause();
+      await rebaseToken.connect(owner).unpause();
+      expect(await rebaseToken.paused()).to.equal(false);
+    });
+
+    it("Should revert if non-owner tries to pause", async function () {
+      await expect(
+        rebaseToken.connect(alice).pause()
+      ).to.be.revertedWithCustomError(rebaseToken, "OwnableUnauthorizedAccount");
+    });
+
+    it("Should block minting when paused", async function () {
+      await rebaseToken.connect(owner).pause();
+
+      await expect(
+        rebaseToken.connect(alice).mint(alice.address, 0, { 
+          value: ethers.parseEther("1.0") 
+        })
+      ).to.be.revertedWithCustomError(rebaseToken, "EnforcedPause");
+    });
+
+    it("Should block transfers when paused", async function () {
+      // Alice deposits first
+      await rebaseToken.connect(alice).mint(alice.address, 0, { 
+        value: ethers.parseEther("1.0") 
+      });
+
+      // Pause
+      await rebaseToken.connect(owner).pause();
+
+      // Transfer should fail
+      await expect(
+        rebaseToken.connect(alice).transfer(bob.address, ethers.parseEther("0.5"))
+      ).to.be.revertedWithCustomError(rebaseToken, "EnforcedPause");
+    });
+
+    it("Should allow transfers after unpause", async function () {
+      // Alice deposits
+      await rebaseToken.connect(alice).mint(alice.address, 0, { 
+        value: ethers.parseEther("1.0") 
+      });
+
+      // Pause
+      await rebaseToken.connect(owner).pause();
+
+      // Unpause
+      await rebaseToken.connect(owner).unpause();
+
+      // Transfer should succeed
+      await expect(
+        rebaseToken.connect(alice).transfer(bob.address, ethers.parseEther("0.5"))
+      ).to.not.be.reverted;
+
+      expect(await rebaseToken.balanceOf(bob.address)).to.equal(ethers.parseEther("0.5"));
+    });
+  });
 });
