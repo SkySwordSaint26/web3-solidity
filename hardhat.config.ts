@@ -12,21 +12,17 @@ if (!MAINNET_RPC_URL) {
 
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.28",
+  solidity: {
+    version: "0.8.28",
+  },
   networks: {
     hardhat: {
       forking: {
         url: MAINNET_RPC_URL,
-        blockNumber: 24012506
+        blockNumber: 24177150
       },
       chainId: 31337
-    },
-    localhost: {
-      forking: {
-        url: MAINNET_RPC_URL,
-        blockNumber: 24012506
-      }
-    },
+    }
   },
   paths: {
     sources: "./contracts",
